@@ -1,28 +1,28 @@
 async function main(){
     const MongoClient = require('mongodb').MongoClient;
-
-    const uri = "mongodb+srv://freda:freda123@cs4440-qjbla.mongodb.net/test?retryWrites=true&w=majority";
-
-    const client = new MongoClient(uri, { useUnifiedTopology: true });
- 
-    try {
-        // Connect to the MongoDB cluster
-        await client.connect();
- 
-        // Make the appropriate DB calls
-        await  listDatabases(client);
- 
-    } catch (e) {
-        console.error(e);
-    } finally {
-        await client.close();
-    }
+    getCollection(MongoClient);
 }
 main().catch(console.error);
 
-async function getCollection() {
-    
-    console.log()
+async function getCollection(MongoClient) {
+    var assert = require('assert');
+    const filter = {};
+    const projection = {
+        'Country': 1, 
+        'Happiness Rank': 1
+    };
+
+MongoClient.connect(
+  'mongodb+srv://freda:freda123@cs4440-qjbla.mongodb.net/test?authSource=admin&replicaSet=cs4440-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true',
+  { useNewUrlParser: true, useUnifiedTopology: true },
+  function(connectErr, client) {
+    assert.equal(null, connectErr);
+    const coll = client.db('Happiness').collection('2015');
+    coll.find(filter, { projection: projection }, (cmdErr, result) => {
+      assert.equal(null, cmdErr);
+    });
+    client.close();
+  });
 }
 
 async function listDatabases(client){
