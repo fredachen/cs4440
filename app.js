@@ -5,6 +5,7 @@ async function main(){
     getAverageForAllYearsPerCountry(MongoClient);
     getMatch(MongoClient);
     getAddFields(MongoClient);
+    bucketting(MongoClient);
 }
 main().catch(console.error);
 
@@ -32,6 +33,45 @@ async function getRankPerCountry(MongoClient) {
     });
     client.close();
   });
+}
+
+async function bucketting(MongoClient) {
+    var assert = require('assert');
+    const agg = [
+    {
+      '$bucket': {
+        'groupBy': '$Economy_GDP', 
+        'boundaries': [
+          '0', '0.5', '1.0', '1.5'
+        ], 
+        'default': 'more than 1.5', 
+        'output': {
+          'countries': {
+            '$push': {
+              'country': {
+                '$concat': [
+                  '$Country', ', ', '$Region'
+                ]
+              }, 
+              'Happiness': '$Happiness_Score'
+            }
+          }
+        }
+      }
+    }
+  ];
+  
+  MongoClient.connect(
+    'mongodb+srv://freda:freda123@cs4440-qjbla.mongodb.net/test?authSource=admin&replicaSet=cs4440-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true',
+    { useNewUrlParser: true, useUnifiedTopology: true },
+    function(connectErr, client) {
+      assert.equal(null, connectErr);
+      const coll = client.db('Happiness2').collection('2015');
+      coll.aggregate(agg, (cmdErr, result) => {
+        assert.equal(null, cmdErr);
+      });
+      client.close();
+    });
 }
 
 async function getAverages(MongoClient) {
