@@ -6,6 +6,7 @@ async function main(){
     getMatch(MongoClient);
     getAddFields(MongoClient);
     bucketting(MongoClient);
+    topFiveInAllYears(MongoClient);
 }
 main().catch(console.error);
 
@@ -33,6 +34,78 @@ async function getRankPerCountry(MongoClient) {
     });
     client.close();
   });
+}
+
+async function topFiveInAllYears(MongoClient) {
+    var assert = require('assert');
+
+    const agg = [
+    {
+      '$match': {
+        '$or': [
+          {
+            'World_Rank': '1'
+          }, {
+            'World_Rank': '2'
+          }, {
+            'World_Rank': '3'
+          }, {
+            'World_Rank': '4'
+          }, {
+            'World_Rank': '5'
+          }
+        ]
+      }
+    }, {
+      '$lookup': {
+        'from': '2016', 
+        'localField': 'Country', 
+        'foreignField': 'Country', 
+        'as': '2016'
+      }
+    }, {
+      '$match': {
+        '2016.World_Rank': {
+          '$lt': '5'
+        }
+      }
+    }, {
+      '$lookup': {
+        'from': '2018', 
+        'localField': 'Country', 
+        'foreignField': 'Country', 
+        'as': '2018'
+      }
+    }, {
+      '$lookup': {
+        'from': '2019', 
+        'localField': 'Country', 
+        'foreignField': 'Country', 
+        'as': '2019'
+      }
+    }, {
+      '$match': {
+        '2018.World_Rank': {
+          '$lte': '5'
+        }, 
+        '2019.World_Rank': {
+          '$lte': '5'
+        }
+      }
+    }
+  ];
+  
+  MongoClient.connect(
+    'mongodb+srv://freda:freda123@cs4440-qjbla.mongodb.net/test?authSource=admin&replicaSet=cs4440-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true',
+    { useNewUrlParser: true, useUnifiedTopology: true },
+    function(connectErr, client) {
+      assert.equal(null, connectErr);
+      const coll = client.db('Happiness2').collection('2015');
+      coll.aggregate(agg, (cmdErr, result) => {
+        assert.equal(null, cmdErr);
+      });
+      client.close();
+    });
 }
 
 async function bucketting(MongoClient) {
