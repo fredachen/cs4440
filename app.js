@@ -3,6 +3,7 @@ async function main(){
     getRankPerCountry(MongoClient);
     getAverages(MongoClient);
     getAverageForAllYearsPerCountry(MongoClient);
+    getMatch(MongoClient);
 }
 main().catch(console.error);
 
@@ -53,6 +54,37 @@ async function getAverages(MongoClient) {
     function(connectErr, client) {
       assert.equal(null, connectErr);
       const coll = client.db('Happiness').collection('2015');
+      coll.aggregate(agg, (cmdErr, result) => {
+        assert.equal(null, cmdErr);
+      });
+      client.close();
+    });
+}
+
+async function getMatch(MongoClient) {
+    var assert = require('assert');
+    const agg = [
+    {
+      '$match': {
+        '$or': [
+          {
+            'World_Rank': '1'
+          }, {
+            'World_Rank': '2'
+          }, {
+            'World_Rank': '3'
+          }
+        ]
+      }
+    }
+  ];
+  
+  MongoClient.connect(
+    'mongodb+srv://freda:freda123@cs4440-qjbla.mongodb.net/test?authSource=admin&replicaSet=cs4440-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true',
+    { useNewUrlParser: true, useUnifiedTopology: true },
+    function(connectErr, client) {
+      assert.equal(null, connectErr);
+      const coll = client.db('Happiness2').collection('2015');
       coll.aggregate(agg, (cmdErr, result) => {
         assert.equal(null, cmdErr);
       });
