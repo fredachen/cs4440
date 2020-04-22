@@ -2,6 +2,7 @@ async function main(){
     const MongoClient = require('mongodb').MongoClient;
     getRankPerCountry(MongoClient);
     getAverages(MongoClient);
+    getAverageForAllYearsPerCountry(MongoClient);
 }
 main().catch(console.error);
 
@@ -52,6 +53,67 @@ async function getAverages(MongoClient) {
     function(connectErr, client) {
       assert.equal(null, connectErr);
       const coll = client.db('Happiness').collection('2015');
+      coll.aggregate(agg, (cmdErr, result) => {
+        assert.equal(null, cmdErr);
+      });
+      client.close();
+    });
+}
+
+async function getAverageForAllYearsPerCountry(MongoClient) {
+    const assert = require('assert');
+    const agg = [
+    {
+      '$lookup': {
+        'from': '2016', 
+        'localField': 'Country', 
+        'foreignField': 'Country', 
+        'as': 'Happ_info'
+      }
+    }, {
+      '$unwind': {
+        'path': '$Happ_info'
+      }
+    }, {
+      '$lookup': {
+        'from': '2018', 
+        'localField': 'Country', 
+        'foreignField': 'Country', 
+        'as': 'Happ_info2'
+      }
+    }, {
+      '$unwind': {
+        'path': '$Happ_info2'
+      }
+    }, {
+      '$lookup': {
+        'from': '2019', 
+        'localField': 'Country', 
+        'foreignField': 'Country', 
+        'as': 'Happ_info3'
+      }
+    }, {
+      '$unwind': {
+        'path': '$Happ_info3'
+      }
+    }, {
+      '$group': {
+        '_id': '$Country', 
+        'average': {
+          '$avg': {
+            '$toDecimal': '$Happiness_Score'
+          }
+        }
+      }
+    }
+  ];
+  
+  MongoClient.connect(
+    'mongodb+srv://freda:freda123@cs4440-qjbla.mongodb.net/test?authSource=admin&replicaSet=cs4440-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true',
+    { useNewUrlParser: true, useUnifiedTopology: true },
+    function(connectErr, client) {
+      assert.equal(null, connectErr);
+      const coll = client.db('Happiness2').collection('2015');
       coll.aggregate(agg, (cmdErr, result) => {
         assert.equal(null, cmdErr);
       });
